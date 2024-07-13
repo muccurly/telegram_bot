@@ -1,27 +1,21 @@
 import json
 from telegram import Update, LabeledPrice, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, ContextTypes, filters
-from flask import Flask, request
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, filters, ContextTypes
 
-app = Flask(__name__)
-
-# Configuration
+# Конфигурация
 TELEGRAM_TOKEN = '7446262616:AAEUrocdS7wrmw4HYXoTaDyBr4DZ4-_ZuhM'
 PROVIDER_TOKEN = '5740929568:TEST:638563210960780616'
 
-# Order data
+# Данные заказа
 TITLE = "Авторский курс от Huga"
 DESCRIPTION = "Создание концепции с помощью ИИ"
 PAYLOAD = "1"
 CURRENCY = "KZT"
-PRICE = 37800 * 100  # Price in smallest currency unit: 3780000 = 37800 KZT
+PRICE = 37800 * 100  # Сумма указывается в копейках: 798000 = 7980 руб
 
 PRICES = [LabeledPrice("Тенге", PRICE)]
 
-# Setup Telegram application
-application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-# Command handler for /start
+# Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🌟 Привет всем! Меня зовут Хуга, (https://www.instagram.com/hugastyle) и я прошел путь от международного дизайнера одежды к погружению в мир Искусственного интеллекта. За последние два месяца мой Инстаграм привлек более 100,000 подписчиков со всего мира благодаря моему новому подходу к дизайну, созданному с применением ИИ.\n\n"
@@ -42,7 +36,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
-# Button callback handler
+# Обработчик нажатия кнопки "Оплатить"
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -77,7 +71,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_invoice(**invoice)
 
-# Pre-checkout query handler
+# Обработчик pre_checkout_query
 async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.pre_checkout_query
 
@@ -86,26 +80,20 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     else:
         await query.answer(ok=True)
 
-# Successful payment handler
+# Обработчик successful_payment
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     successful_payment = update.message.successful_payment
     await update.message.reply_text("Оплата прошла успешно! Можешь по этой ссылке вступить в группу: https://t.me/+B_me4k9U1WdmNjEy")
 
-# Register handlers
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CallbackQueryHandler(button_callback, pattern="pay"))
-application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
-application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
+def main():
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(), application.bot)
-    application.process_update(update)
-    return "ok", 200
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button_callback, pattern="pay"))
+    application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
 
-@app.route("/")
-def index():
-    return "Hello, this is a Telegram bot webhook.", 200
+    application.run_polling()
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    main()
