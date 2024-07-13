@@ -1,6 +1,7 @@
 import json
 from telegram import Update, LabeledPrice, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, filters, ContextTypes
+from flask import Flask, request
 
 # Конфигурация
 TELEGRAM_TOKEN = '7446262616:AAEUrocdS7wrmw4HYXoTaDyBr4DZ4-_ZuhM'
@@ -11,7 +12,7 @@ TITLE = "Авторский курс от Huga"
 DESCRIPTION = "Создание концепции с помощью ИИ"
 PAYLOAD = "1"
 CURRENCY = "KZT"
-PRICE = 37800 * 100  # Сумма указывается в копейках: 798000 = 7980 руб
+PRICE = 37800 * 100  # Сумма указывается в копейках: 37800 тг
 
 PRICES = [LabeledPrice("Тенге", PRICE)]
 
@@ -85,15 +86,20 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     successful_payment = update.message.successful_payment
     await update.message.reply_text("Оплата прошла успешно! Можешь по этой ссылке вступить в группу: https://t.me/+B_me4k9U1WdmNjEy")
 
-def main():
-    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_callback, pattern="pay"))
-    application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
-    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CallbackQueryHandler(button_callback, pattern="pay"))
+application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
+application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
 
-    application.run_polling()
+app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.process_update(update)
+    return 'ok'
 
 if __name__ == '__main__':
-    main()
+    application.run_polling()
