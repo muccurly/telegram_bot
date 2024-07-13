@@ -1,10 +1,19 @@
 {
-    "version": 2,
     "builds": [
-      { "src": "api/index.py", "use": "@vercel/python" }
+      {
+        "src": "index.py",
+        "use": "@vercel/python"
+      }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "api/index.py" }
+      {
+        "src": "/favicon.ico",
+        "dest": "/favicon.ico"
+      },
+      {
+        "src": "/favicon.png",
+        "dest": "/favicon.png"
+      }
     ]
   }
   
