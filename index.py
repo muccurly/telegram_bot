@@ -97,9 +97,13 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)
-    return 'ok'
+    try:
+        update = Update.de_json(request.get_json(force=True), application.bot)
+        application.process_update(update)
+        return 'ok'
+    except Exception as e:
+        print(f"Error: {e}")
+        return 'error', 500
 
 if __name__ == '__main__':
     application.run_polling()
