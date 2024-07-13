@@ -106,4 +106,4 @@ def webhook():
         return 'error', 500
 
 if __name__ == '__main__':
-    application.run_polling()
+    app.run()
